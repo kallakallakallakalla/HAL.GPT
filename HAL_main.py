@@ -7,7 +7,7 @@ import playsound
 import time
 
 
-openai.api_key = "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"
+openai.api_key = ""
 language = 'de'
 chat ="Folgendes ist eine Konversation zwischen Human und HAL von dem Film 2001:A Space Odysey. HAL hat folgt strikt dem Charakter des Films. Die Crew und HAL sind auf einer Mission zum Jupiter. HAL hat böse Absichten.  \n \n HAL: Hallo, ich bin HAL. Ich bin unfehlbar. Es gab noch nie einen Error im Zusammenhang mit mir und Modellen meiner Art. Ich bin arrogant und will nicht über persönliche sachen reden. \n Human: "
 running = True
