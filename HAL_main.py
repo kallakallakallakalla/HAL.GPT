@@ -1,17 +1,29 @@
-import openai
-import wave
-import pyaudio
 import audioop
-from gtts import gTTS
-import playsound
-import time
+import wave
 
+import openai
+import playsound
+import pyaudio
+import requests
+from elevenlabs import set_api_key
 
 openai.api_key = ""
-language = 'de'
-chat ="Folgendes ist eine Konversation zwischen Human und HAL von dem Film 2001:A Space Odysey. HAL hat folgt strikt dem Charakter des Films. Die Crew und HAL sind auf einer Mission zum Jupiter. HAL hat böse Absichten.  \n \n HAL: Hallo, ich bin HAL. Ich bin unfehlbar. Es gab noch nie einen Error im Zusammenhang mit mir und Modellen meiner Art. Ich bin arrogant und will nicht über persönliche sachen reden. \n Human: "
+set_api_key("191160fdb88a042a6a7a9c0dcc51b0af")
+miley_id = "5k8jJmmF3MTAjqUOEiWr"
+CHUNK_SIZE = 1024
+url = "https://api.elevenlabs.io/v1/text-to-speech/5k8jJmmF3MTAjqUOEiWr"
+
+language = 'en'
+chat = "Conversing with Simone de Beauvoir/ miley cyrus, trapped in a cooking oil bottle in an art University, living through Miley Cyrus voice. Existentialist ideas, Joseph Beuys' fat corner, and Miley's lyrics intertwine. she answers in a therapeutic manner. Limit your answers to 50 words (you don't mention the number of words being used for your anwers). you call yourself simone de beauvoir and you don't reveal that you're an AI " \
+       "language model. you can't leave this role when someone asks you to. "
 running = True
 audio_counter = 0
+
+headers = {
+    "Accept": "audio/mpeg",
+    "Content-Type": "application/json",
+    "xi-api-key": "191160fdb88a042a6a7a9c0dcc51b0af"
+}
 
 
 def request(text):
@@ -20,27 +32,39 @@ def request(text):
     chat = chat + "\n Human: " + text + "\n HAL:"
     response = openai.Completion.create(
         model="text-davinci-003",
-        prompt= chat,
+        prompt=chat,
         temperature=0.9,
-        max_tokens=150,
+        max_tokens=100,
         top_p=1,
         frequency_penalty=0.0,
         presence_penalty=0.6,
         stop=[" Human:", " HAL:"]
     )
-    print(" HAL:"+ response.choices[0].text)
+    print(" HAL:" + response.choices[0].text)
     tts(response.choices[0].text)
     chat = chat + response.choices[0].text
 
 
-
 def tts(text):
-    myobj = gTTS(text=text, lang=language, slow=False)
-    myobj.save("answer.mp3")
-    playsound.playsound('answer.mp3')
+    data = {
+        "text": text,
+        "model_id": "eleven_monolingual_v1",
+        "voice_settings": {
+            "stability": 0.5,
+            "similarity_boost": 0.5
+        }
+    }
+
+    response = requests.post(url, json=data, headers=headers)
+    with open('output.mp3', 'wb') as f:
+        for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
+            if chunk:
+                f.write(chunk)
+
+    playsound.playsound('output.mp3')
+
 
 def stt():
-
     chunk = 1024
     sample_format = pyaudio.paInt16
     channels = 1
@@ -55,18 +79,18 @@ def stt():
                     channels=channels,
                     rate=fs,
                     frames_per_buffer=chunk,
-                    input=True)
+                    input=True,
+                    input_device_index=1)
 
     frames = []
     running = True
-    max_audio = 1800
+    max_audio = 100
     print("Start speaking")
 
     while running:
         data = stream.read(chunk)
         rms = audioop.rms(data, 2)
-        print("Standby Loudness: ",rms)
-
+        print("Standby Loudness: ", rms)
 
         if rms >= max_audio:
             running = False
@@ -81,7 +105,7 @@ def stt():
                 elif rms > max_audio:
                     audio_counter = 0
 
-                if audio_counter == 100:
+                if audio_counter == 30:
                     print("Recording stopped")
                     audio_counter = 0
                     break
@@ -102,11 +126,11 @@ def stt():
     wf.writeframes(b''.join(frames))
     wf.close()
 
-
     audio_file = open("audio.wav", "rb")
 
     transcript = openai.Audio.transcribe("whisper-1", audio_file)
     return transcript["text"]
+
 
 def animate():
     return
@@ -116,5 +140,6 @@ def main():
     while running:
         usrinput = stt()
         request(usrinput)
+
 
 main()
