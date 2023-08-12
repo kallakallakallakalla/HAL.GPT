@@ -1,5 +1,6 @@
 import audioop
 import wave
+import subprocess
 import openai
 import playsound
 import pyaudio
@@ -16,6 +17,8 @@ language = 'en'
 chat = "The following is a conversation between Human and HAL from the movie 2001:A Space Odysey. HAL strictly follows the character of the film. The crew and HAL are on a mission to Jupiter. HAL has bad intentions. \n \n HAL: Hi, I'm HAL. I am infallible. There has never been an error related to me and models of my kind. I'm arrogant and don't want to talk about personal things."
 running = True
 audio_counter = 0
+
+
 
 headers = {
     "Accept": "audio/mpeg",
@@ -53,13 +56,19 @@ def tts(text):
         }
     }
 
-    response = requests.post(url, json=data, headers=headers)
-    with open('output.mp3', 'wb') as f:
-        for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
-            if chunk:
-                f.write(chunk)
+    response = requests.post(url, headers=headers, json=data, stream=True)
+    response.raise_for_status()
 
-    playsound.playsound('output.mp3')
+    # use subprocess to pipe the audio data to ffplay and play it
+    ffplay_cmd = ['ffplay', '-autoexit', '-']
+    ffplay_proc = subprocess.Popen(ffplay_cmd, stdin=subprocess.PIPE)
+    for chunk in response.iter_content(chunk_size=4096):
+        ffplay_proc.stdin.write(chunk)
+        print("Downloading...")
+
+    # close the ffplay process when finished
+    ffplay_proc.stdin.close()
+    ffplay_proc.wait()
 
 
 def stt():
@@ -136,7 +145,7 @@ def animate():
 
 def main():
     while running:
-        usrinput = stt()
+        usrinput = input()
         request(usrinput)
 
 
