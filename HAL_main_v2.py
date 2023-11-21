@@ -9,7 +9,7 @@ from elevenlabs import set_api_key
 
 openai.api_key = "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"
 set_api_key("b56f836b9c6196302ecf0f174d0fc508")
-miley_id = "i5gQnMRZGbvnoupxKTl0"
+miley_id = "i5gQnMRZGbvnoupxKTl0i5gQnMRZGbvnoupxKTl0"
 CHUNK_SIZE = 1024
 url = "https://api.elevenlabs.io/v1/text-to-speech/i5gQnMRZGbvnoupxKTl0"
 
